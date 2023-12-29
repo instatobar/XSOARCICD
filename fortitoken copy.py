@@ -21,12 +21,17 @@ class FortiTokenAPI:
         self.__vdoms = vdom
         self.__verify = False  # Deshabilitar la verificación del certificado SSL, si es necesario
 
-    def __clear_keys(self,**kwargs):
+    def __clear_keys(self, kwargs):
         newDict: dict = {}
+        
         for k, v in kwargs.items():
             if "_" in k:
-                newDict[k.replace("_", "-")]
-        
+                newDict[k.replace("_", "-")] = v
+            else:
+                newDict[k] = v
+                
+        return newDict
+
 
     def retrieve_token_all(self):
         """
@@ -60,7 +65,7 @@ class FortiTokenAPI:
         data_fill_users = data.get("results", [])       
         return data_fill_users
     
-    def update_user(self, name,enable_two_factor: bool = False, **kwargs):
+    def update_user(self, name, **kwargs):
         """
         Actualiza el usuario con el nombre especificado y cambia el estado.
 
@@ -80,7 +85,7 @@ class FortiTokenAPI:
         if (user_data := self.__session.get(url, params=params, verify=self.__verify)):
             update_user = user_data.json()["results"][0]
 
-            update_user.update({'status': kwargs})
+            update_user.update(self.__clear_keys(kwargs))
             
             response = self.__session.put(url, params=params, json=update_user, verify=self.__verify)
 
@@ -101,7 +106,7 @@ def main():
     # print(json.dumps(users, indent=1))
     
     # Actualizar el usuario con el nombre especificado
-    oUser = ft.update_user("soc_corporaciones_dev", enable_two_factor: bool = False, status="disable")
+    oUser = ft.update_user("soc_corporaciones_dev", status="enable", two_factor="fortitoken", two_factor_authentication="fortitoken", fortitoken="FTKMOB1CF413383F", email_to="ints_atobar@externos.entel.cl")
     print(oUser)
     #print(json.dumps(oUser, indent=1))       
         
